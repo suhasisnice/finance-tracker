@@ -1,4 +1,4 @@
-Finance Tracker - Backend
+Finance Tracker - Backend Using FASTAPI
 
 Description:
 -------------
@@ -73,8 +73,6 @@ Usage:
 
 3. Run the server
    uvicorn main:app --reload
-
-4. Access API docs at http://127.0.0.1:8000/docs
 
 Motivation:
 ------------
