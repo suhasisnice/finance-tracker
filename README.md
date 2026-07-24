@@ -62,7 +62,7 @@ API Endpoints:
 Usage:
 -------
 1. Clone the repository
-   git clone https://github.com/yourusername/finance-tracker.git
+   git clone https://github.com/suhasisnice/finance-tracker.git
    cd finance-tracker
 
 2. Create a virtual environment and install dependencies
