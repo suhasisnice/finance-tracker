@@ -36,6 +36,7 @@ _MERCHANT_PATTERNS = [
     re.compile(r"\bUPI/(?:P2M|P2A)/\d+/([\w .\-]+?)(?:[.,]|\s+on\b|\s+Ref\b|$)", re.IGNORECASE),  # UPI/P2M/123/swiggy
     re.compile(r"\bto\s+([\w.\-]+?)@[\w.\-]+", re.IGNORECASE),            # to swiggy@ybl
     re.compile(r"\bfrom\s+([\w.\-]+?)@[\w.\-]+", re.IGNORECASE),          # from ramesh@okhdfcbank
+    re.compile(r"([\w.\-]+?)@[\w.\-]+\s+credited\b", re.IGNORECASE),      # blinkit@ybl credited (ICICI style)
     re.compile(r"\b(?:towards|to)\s+([A-Za-z][\w .&\-]{1,30}?)(?:\s+on\b|\s+Ref\b|[.,]|$)", re.IGNORECASE),
     re.compile(r"\bat\s+([A-Za-z][\w .&\-]{1,30}?)(?:\s+on\b|[.,]|$)", re.IGNORECASE),
 ]
