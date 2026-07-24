@@ -123,6 +123,36 @@ export function getCurrency(code) {
 }
 
 /**
+ * Compact amount for large figures (projections, corpora) so they don't collide
+ * in tight cards. INR uses lakh/crore; other currencies use Intl compact
+ * notation. For small values it falls through to the normal formatter.
+ */
+export function formatCompactAmount(inrAmount, currency) {
+  const value = (inrAmount ?? 0) * currency.rate;
+  const abs = Math.abs(value);
+
+  if (currency.code === "INR") {
+    const sign = value < 0 ? "-" : "";
+    if (abs >= 1e7) return `${sign}₹${(abs / 1e7).toFixed(2)} Cr`;
+    if (abs >= 1e5) return `${sign}₹${(abs / 1e5).toFixed(2)} L`;
+    if (abs >= 1e3) return `${sign}₹${(abs / 1e3).toFixed(1)}K`;
+    return `${sign}₹${abs.toFixed(0)}`;
+  }
+
+  // Non-INR: only compact once the number is genuinely large.
+  if (abs >= 1000) {
+    try {
+      return new Intl.NumberFormat("en-US", {
+        style: "currency", currency: currency.code, notation: "compact", maximumFractionDigits: 2,
+      }).format(value);
+    } catch {
+      return `${currency.symbol}${(value / 1000).toFixed(1)}K`;
+    }
+  }
+  return formatAmount(inrAmount, currency);
+}
+
+/**
  * Format an INR amount into the target currency.
  * @param {number} inrAmount  – raw value from the API (always INR)
  * @param {{ code, symbol, rate }} currency

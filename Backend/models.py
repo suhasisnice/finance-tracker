@@ -28,3 +28,25 @@ class TransactionIn(BaseModel):
 
 class CategorizeIn(BaseModel):
     description: str = Field(min_length=1)
+
+
+class ParseSmsIn(BaseModel):
+    text: str = Field(min_length=1)
+
+
+class InvestmentGoalIn(BaseModel):
+    username: str
+    name: str = Field(min_length=1, max_length=100)
+    target_amount: float = Field(gt=0)
+    duration_months: int = Field(gt=0, le=1200)
+    risk_profile: Literal["conservative", "moderate", "aggressive"]
+    priority: Literal["low", "medium", "high"] = "medium"
+    mode: Literal["sip", "lumpsum", "hybrid"]
+    monthly_sip: float = Field(default=0, ge=0)
+    lumpsum_amount: float = Field(default=0, ge=0)
+    step_up_pct: float = Field(default=0, ge=0, le=100)
+    notes: str | None = None
+    # Custom portfolio as a list of holdings ({id,label,asset,exchange,weight,
+    # annualReturn}); None → use the risk-profile template. Capped to keep the
+    # stored JSON small.
+    allocation: list[dict] | None = Field(default=None, max_length=50)

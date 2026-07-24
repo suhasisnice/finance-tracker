@@ -22,6 +22,15 @@ function IconTx() {
   );
 }
 
+function IconInvest() {
+  return (
+    <svg className="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path d="M2 12l4-4 3 3 5-6" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M11 5h3v3" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
+}
+
 function IconLogout() {
   return (
     <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" style={{ marginRight: 6 }}>
@@ -42,10 +51,10 @@ export default function Sidebar({ username, onLogout }) {
         {/* Small circular logo — logo-sm.png */}
         <img
           src="/logo-sm.png"
-          alt="Budgie"
+          alt="GrowX"
           className="sidebar-logo-img"
         />
-        <span className="sidebar-wordmark">Budgie</span>
+        <span className="sidebar-wordmark">GrowX</span>
       </div>
 
       {/* ── Nav ──────────────────────────────────────────────── */}
@@ -55,6 +64,9 @@ export default function Sidebar({ username, onLogout }) {
         </NavLink>
         <NavLink to="/transactions" className={({ isActive }) => isActive ? "active" : ""}>
           <IconTx /> Transactions
+        </NavLink>
+        <NavLink to="/investments" className={({ isActive }) => isActive ? "active" : ""}>
+          <IconInvest /> Investments
         </NavLink>
       </nav>
 

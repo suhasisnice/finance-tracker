@@ -53,6 +53,36 @@ def init_db():
     _add_column_if_missing(cur, "transactions", "description", "TEXT")
     _add_column_if_missing(cur, "transactions", "source", "TEXT NOT NULL DEFAULT 'live'")
 
+    # Investment goals for the Investment Planner. Financial projections are
+    # derived client-side from these inputs; only the goal definition is stored.
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS investment_goals (
+            g_id            INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id         INTEGER NOT NULL,
+            name            TEXT NOT NULL,
+            target_amount   REAL NOT NULL,
+            duration_months INTEGER NOT NULL,
+            risk_profile    TEXT NOT NULL CHECK (risk_profile IN ('conservative', 'moderate', 'aggressive')),
+            priority        TEXT NOT NULL CHECK (priority IN ('low', 'medium', 'high')),
+            mode            TEXT NOT NULL CHECK (mode IN ('sip', 'lumpsum', 'hybrid')),
+            monthly_sip     REAL NOT NULL DEFAULT 0,
+            lumpsum_amount  REAL NOT NULL DEFAULT 0,
+            step_up_pct     REAL NOT NULL DEFAULT 0,
+            notes           TEXT,
+            created_at      TEXT NOT NULL,
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        );
+        """
+    )
+    cur.execute(
+        "CREATE INDEX IF NOT EXISTS idx_goal_user ON investment_goals(user_id);"
+    )
+
+    # Custom fund/asset allocation, stored as a JSON array of holdings. Null
+    # means "use the risk-profile template" (back-compatible with older goals).
+    _add_column_if_missing(cur, "investment_goals", "allocation_json", "TEXT")
+
     con.commit()
     con.close()
 

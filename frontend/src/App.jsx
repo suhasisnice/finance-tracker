@@ -5,6 +5,7 @@ import { CurrencyProvider } from "./CurrencyContext";
 import AuthPage from "./pages/AuthPage";
 import DashboardPage from "./pages/DashboardPage";
 import TransactionsPage from "./pages/TransactionsPage";
+import InvestmentPlannerPage from "./pages/InvestmentPlannerPage";
 import Sidebar from "./components/Sidebar";
 
 function PrivateApp({ username, onLogout }) {
@@ -27,6 +28,10 @@ function PrivateApp({ username, onLogout }) {
                 onTransactionAdded={() => dashRef.current?.refresh()}
               />
             }
+          />
+          <Route
+            path="/investments"
+            element={<InvestmentPlannerPage username={username} />}
           />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>

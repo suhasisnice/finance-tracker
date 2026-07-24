@@ -47,20 +47,20 @@ export const getTransactions = (username) =>
   request("GET", `/transactions?username=${encodeURIComponent(username)}`);
 
 // ── Balance ───────────────────────────────────────────────────────────────────
-export const getBalance = (username) =>
-  request("GET", `/balance?username=${encodeURIComponent(username)}`);
+export const getBalance = (username, source) =>
+  request("GET", `/balance?username=${encodeURIComponent(username)}${src(source)}`);
 
 // ── Reports ───────────────────────────────────────────────────────────────────
-export const getMonthlyReport = (username, month, year) =>
+export const getMonthlyReport = (username, month, year, source) =>
   request(
     "GET",
-    `/monthly-report?username=${encodeURIComponent(username)}&month=${month}&year=${year}`
+    `/monthly-report?username=${encodeURIComponent(username)}&month=${month}&year=${year}${src(source)}`
   );
 
-export const getCategorySummary = (username, month, year) => {
+export const getCategorySummary = (username, month, year, source) => {
   let url = `/category-summary?username=${encodeURIComponent(username)}`;
   if (month != null) url += `&month=${month}&year=${year}`;
-  return request("GET", url);
+  return request("GET", url + src(source));
 };
 
 export const getInsights = (username, month, year) =>
@@ -68,3 +68,34 @@ export const getInsights = (username, month, year) =>
     "GET",
     `/insights?username=${encodeURIComponent(username)}&month=${month}&year=${year}`
   );
+
+// ── ML-baseline helpers ──────────────────────────────────────────────────────
+export const categorizeDescription = (description) =>
+  request("POST", "/categorize", { description });
+
+export const parseSms = (text) =>
+  request("POST", "/parse-sms", { text });
+
+const src = (source) => (source ? `&source=${encodeURIComponent(source)}` : "");
+
+export const getHealthScore = (username, source) =>
+  request("GET", `/health-score?username=${encodeURIComponent(username)}${src(source)}`);
+
+export const getAnomalies = (username, source) =>
+  request("GET", `/anomalies?username=${encodeURIComponent(username)}${src(source)}`);
+
+export const getForecast = (username, source) =>
+  request("GET", `/forecast?username=${encodeURIComponent(username)}${src(source)}`);
+
+// ── Investment goals ──────────────────────────────────────────────────────────
+export const getInvestmentGoals = (username) =>
+  request("GET", `/investment-goals?username=${encodeURIComponent(username)}`);
+
+export const createInvestmentGoal = (payload) =>
+  request("POST", "/investment-goals", payload);
+
+export const updateInvestmentGoal = (gId, payload) =>
+  request("PUT", `/investment-goals/${gId}`, payload);
+
+export const deleteInvestmentGoal = (username, gId) =>
+  request("DELETE", `/investment-goals/${gId}?username=${encodeURIComponent(username)}`);

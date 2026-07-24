@@ -1,11 +1,6 @@
 import { useCurrency } from "../CurrencyContext";
 import { formatAmount } from "../currency";
-
-const PALETTE = [
-  "#7c6ff7", "#34d399", "#f87171", "#fbbf24",
-  "#60a5fa", "#a78bfa", "#fb923c", "#f472b6",
-  "#2dd4bf", "#a3e635",
-];
+import { CATEGORY_PALETTE as PALETTE } from "../chartPalette";
 
 export default function DonutChart({ categories }) {
   const { currency } = useCurrency();

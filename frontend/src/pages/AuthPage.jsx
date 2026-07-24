@@ -44,8 +44,8 @@ export default function AuthPage({ onLogin }) {
       <div className="auth-card">
         <div className="auth-logo">
           {/* Large speech-bubble logo — logo.png */}
-          <img src="/logo.png" alt="Budgie" className="auth-logo-img" />
-          <span className="auth-logo-text">Budgie</span>
+          <img src="/logo.png" alt="GrowX" className="auth-logo-img" />
+          <span className="auth-logo-text">GrowX</span>
         </div>
 
         <h1 className="auth-heading">{tab === "login" ? "Welcome back" : "Create account"}</h1>

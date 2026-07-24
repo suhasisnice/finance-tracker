@@ -15,21 +15,26 @@ class FinanceManager:
             raise HTTPException(status_code=404, detail="No user found.")
         return user_id
 
-    def calculate_balance(self, username):
+    def calculate_balance(self, username, source=None):
         """Net balance via a single-pass conditional-aggregation query."""
         con = get_connection()
         cur = con.cursor()
         try:
             user_id = self._require_user(cur, username)
+            params = [user_id]
+            source_filter = ""
+            if source is not None:
+                source_filter = " AND source = ?"
+                params.append(source)
             cur.execute(
-                """
+                f"""
                 SELECT
                     COALESCE(SUM(CASE WHEN t_type = 'income'  THEN amount ELSE 0 END), 0) AS income,
                     COALESCE(SUM(CASE WHEN t_type = 'expense' THEN amount ELSE 0 END), 0) AS expense
                 FROM transactions
-                WHERE user_id = ?
+                WHERE user_id = ?{source_filter}
                 """,
-                (user_id,),
+                params,
             )
             row = cur.fetchone()
         finally:
@@ -73,7 +78,7 @@ class FinanceManager:
             con.close()
         return [dict(r) for r in rows]
 
-    def monthly_report(self, username, month, year):
+    def monthly_report(self, username, month, year, source=None):
         """Aggregated income/expense/net plus the transaction list for a month."""
         if not 1 <= month <= 12:
             raise HTTPException(status_code=422, detail="month must be between 1 and 12.")
@@ -87,14 +92,19 @@ class FinanceManager:
         cur = con.cursor()
         try:
             user_id = self._require_user(cur, username)
+            params = [user_id, start_str, end_str]
+            source_filter = ""
+            if source is not None:
+                source_filter = " AND source = ?"
+                params.append(source)
             cur.execute(
-                """
+                f"""
                 SELECT t_id, amount, t_type, category, t_date
                 FROM transactions
-                WHERE user_id = ? AND t_date >= ? AND t_date < ?
+                WHERE user_id = ? AND t_date >= ? AND t_date < ?{source_filter}
                 ORDER BY t_date ASC, t_id ASC
                 """,
-                (user_id, start_str, end_str),
+                params,
             )
             rows = [dict(r) for r in cur.fetchall()]
         finally:

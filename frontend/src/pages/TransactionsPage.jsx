@@ -1,14 +1,15 @@
 import { useEffect, useState, useCallback } from "react";
-import { addTransaction, getTransactions } from "../api";
+import { addTransaction, getTransactions, parseSms } from "../api";
 import { todayISO } from "../utils";
 import { useCurrency } from "../CurrencyContext";
 import { formatAmount } from "../currency";
 import Select from "../components/Select";
 
 const PRESET_CATEGORIES = [
-  "Food", "Travel", "Entertainment", "Shopping", "Bills", "Salary",
+  "Food", "Food Delivery", "Travel", "Entertainment", "Shopping", "Bills", "Salary",
   "Health", "Education", "Fuel", "Rent", "Subscriptions", "Groceries",
-  "Dining Out", "Insurance", "Investments", "Gym & Fitness", "Personal Care", "Other",
+  "Dining Out", "Insurance", "Investments", "Gym & Fitness", "Personal Care",
+  "Uncategorized", "Other",
 ];
 
 const CATEGORY_OPTIONS = PRESET_CATEGORIES.map((c) => ({ value: c, label: c }));
@@ -25,10 +26,16 @@ export default function TransactionsPage({ username, onTransactionAdded }) {
   const [tType, setTType]                   = useState("expense");
   const [category, setCategory]             = useState("Food");
   const [customCategory, setCustomCategory] = useState("");
+  const [description, setDescription]       = useState("");
   const [tDate, setTDate]                   = useState(todayISO());
   const [formError, setFormError]           = useState("");
   const [formSuccess, setFormSuccess]       = useState("");
   const [submitting, setSubmitting]         = useState(false);
+
+  const [smsText, setSmsText]           = useState("");
+  const [smsParsing, setSmsParsing]     = useState(false);
+  const [smsError, setSmsError]         = useState("");
+  const [smsResult, setSmsResult]       = useState(null);
 
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading]           = useState(true);
@@ -49,6 +56,33 @@ export default function TransactionsPage({ username, onTransactionAdded }) {
 
   useEffect(() => { fetchTransactions(); }, [fetchTransactions]);
 
+  async function handleParseSms() {
+    if (!smsText.trim()) { setSmsError("Paste an SMS first."); return; }
+    setSmsError(""); setSmsResult(null); setSmsParsing(true);
+    try {
+      const parsed = await parseSms(smsText);
+      setSmsResult(parsed);
+
+      if (parsed.amount != null) setAmount(String(parsed.amount));
+      setTType(parsed.direction === "credit" ? "income" : "expense");
+
+      const suggested = parsed.suggested_category;
+      if (suggested && PRESET_CATEGORIES.includes(suggested)) {
+        setCategory(suggested);
+      } else if (suggested) {
+        setCategory("Other");
+        setCustomCategory(suggested);
+      }
+
+      if (parsed.date) setTDate(parsed.date);
+      setDescription(parsed.merchant || smsText.trim().slice(0, 120));
+    } catch (e) {
+      setSmsError(e.message);
+    } finally {
+      setSmsParsing(false);
+    }
+  }
+
   async function handleSubmit(e) {
     e.preventDefault();
     setFormError(""); setFormSuccess("");
@@ -63,10 +97,15 @@ export default function TransactionsPage({ username, onTransactionAdded }) {
 
     setSubmitting(true);
     try {
-      await addTransaction({ username, amount: parsedAmount, t_type: tType, category: finalCategory, t_date: tDate });
+      await addTransaction({
+        username, amount: parsedAmount, t_type: tType, category: finalCategory,
+        t_date: tDate, description: description.trim() || null,
+      });
       setFormSuccess("Transaction recorded.");
       setAmount("");
+      setDescription("");
       setTDate(todayISO());
+      setSmsText(""); setSmsResult(null);
       await fetchTransactions();
       if (onTransactionAdded) onTransactionAdded();
     } catch (e) {
@@ -79,6 +118,40 @@ export default function TransactionsPage({ username, onTransactionAdded }) {
   return (
     <div>
       <h1 className="page-title">Transactions</h1>
+
+      {/* ── Paste bank/UPI SMS ──────────────────────────────────────── */}
+      <div className="card" style={{ marginBottom: 20 }}>
+        <div className="panel-heading" style={{ marginBottom: 6 }}>Paste bank / UPI SMS</div>
+        <p className="muted text-sm" style={{ marginBottom: 12 }}>
+          Paste an SMS from HDFC, SBI, ICICI, Axis, or a generic UPI alert — amount, merchant,
+          date, and category will be filled in below for you to review.
+        </p>
+
+        {smsError && <div className="error-msg">{smsError}</div>}
+
+        <textarea
+          rows={3}
+          placeholder="e.g. Sent Rs.349.00 From HDFC Bank A/C x1234 To zepto On 24/07/26 Ref 123456789012"
+          value={smsText}
+          onChange={(e) => setSmsText(e.target.value)}
+          style={{ width: "100%", resize: "vertical", marginBottom: 10 }}
+        />
+        <button
+          type="button" className="btn btn-primary"
+          onClick={handleParseSms} disabled={smsParsing}
+        >
+          {smsParsing ? <><span className="spinner" /> Parsing…</> : "Parse SMS"}
+        </button>
+
+        {smsResult && (
+          <div className="text-xs muted" style={{ marginTop: 10 }}>
+            Parsed: {fmt(smsResult.amount ?? 0)} · {smsResult.direction ?? "unknown"} ·{" "}
+            {smsResult.merchant ?? "merchant unknown"} · {smsResult.date ?? "date unknown"} ·{" "}
+            {smsResult.bank} · suggested category "{smsResult.suggested_category}" — form
+            pre-filled below, edit before saving.
+          </div>
+        )}
+      </div>
 
       {/* ── Add form ────────────────────────────────────────────────── */}
       <div className="card" style={{ marginBottom: 20 }}>
@@ -139,6 +212,16 @@ export default function TransactionsPage({ username, onTransactionAdded }) {
                 />
               </div>
             )}
+
+            {/* Description */}
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label htmlFor="description">Description (optional)</label>
+              <input
+                id="description" type="text" placeholder="e.g. Swiggy dinner order"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+              />
+            </div>
 
             {/* Date */}
             <div className="form-group" style={{ marginBottom: 0 }}>
